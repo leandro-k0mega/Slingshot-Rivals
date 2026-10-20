@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bglj1rlsg0n72"]
+
+[ext_resource type="Script" uid="uid://ca5mj05athlih" path="res://sistema-turnos.gd" id="1_c0q10"]
+
+[node name="turnos" type="Node2D" unique_id=2058269847]
+script = ExtResource("1_c0q10")
+
+[node name="Timer" type="Timer" parent="." unique_id=1886573770]
+wait_time = 15.0
+one_shot = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
