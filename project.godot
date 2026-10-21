@@ -12,6 +12,7 @@ config_version=5
 
 config/name="Slingshot Rivals"
 run/main_scene="uid://bwnxtsng53qu6"
+run/main_scene="uid://bglj1rlsg0n72"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
