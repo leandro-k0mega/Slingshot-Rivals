@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://blhcenr3ng3kp" path="res://transformar_circulo.gd" id="3_gib8o"]
 [ext_resource type="Texture2D" uid="uid://dixfqob7vtbls" path="res://triangle.svg" id="3_runyr"]
 [ext_resource type="Script" uid="uid://cgba8ghctrl24" path="res://transformar_triangulo.gd" id="5_quwlu"]
+[ext_resource type="Script" uid="uid://dm0g8q47c84ad" path="res://fisica_jogador2.gd" id="7_8hs8y"]
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_18kp0"]
 
@@ -24,9 +25,14 @@ size = Vector2(159, 155)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7numd"]
 size = Vector2(150, 161)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d0u6y"]
+size = Vector2(141, 141)
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_fcnqv"]
+
 [node name="Node2D" type="Node2D" unique_id=1260034005]
 
-[node name="RigidBody2D" type="RigidBody2D" parent="." unique_id=328319976]
+[node name="Player1" type="RigidBody2D" parent="." unique_id=328319976]
 input_pickable = true
 contact_monitor = true
 max_contacts_reported = 4
@@ -34,21 +40,21 @@ script = ExtResource("1_18kp0")
 textura_circulo = ExtResource("2_vv0rr")
 textura_triangulo = ExtResource("3_runyr")
 
-[node name="Line2D" type="Line2D" parent="RigidBody2D" unique_id=51147263]
+[node name="Line2D" type="Line2D" parent="Player1" unique_id=51147263]
 points = PackedVector2Array(469, 301)
 width = 8.0
 
-[node name="Sprite2D" type="Sprite2D" parent="RigidBody2D" unique_id=1920707681]
+[node name="Sprite2D" type="Sprite2D" parent="Player1" unique_id=1920707681]
 modulate = Color(0.31035683, 0.35026234, 1, 1)
 position = Vector2(1.375, 1.375)
 scale = Vector2(129.25, 133.25)
 texture = SubResource("PlaceholderTexture2D_18kp0")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="RigidBody2D" unique_id=1621761298]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player1" unique_id=1621761298]
 position = Vector2(0.5, 0.5)
 shape = SubResource("RectangleShape2D_g4v7s")
 
-[node name="RayCast2D" type="RayCast2D" parent="RigidBody2D" unique_id=382481827]
+[node name="RayCast2D" type="RayCast2D" parent="Player1" unique_id=382481827]
 target_position = Vector2(0, 80)
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=172518323]
@@ -98,3 +104,24 @@ shape = SubResource("RectangleShape2D_7numd")
 [node name="Sprite2D" type="Sprite2D" parent="TransformarTriangulo" unique_id=517812786]
 position = Vector2(-662, 236)
 texture = ExtResource("1_q3ojg")
+
+[node name="Player2" type="RigidBody2D" parent="." unique_id=241586817]
+position = Vector2(-500, 0)
+contact_monitor = true
+max_contacts_reported = 4
+script = ExtResource("7_8hs8y")
+
+[node name="CollisionShape2D_Jogador2" type="CollisionShape2D" parent="Player2" unique_id=697180097]
+position = Vector2(-5.5, -8.5)
+shape = SubResource("RectangleShape2D_d0u6y")
+
+[node name="Sprite2D_Jogador2" type="Sprite2D" parent="Player2" unique_id=25666778]
+modulate = Color(0.87058824, 0, 0, 1)
+position = Vector2(-3, -8)
+scale = Vector2(140, 140)
+texture = SubResource("PlaceholderTexture2D_fcnqv")
+
+[node name="RayCast2D_Jogador2" type="RayCast2D" parent="Player2" unique_id=1615060475]
+target_position = Vector2(-1, 80)
+
+[node name="Line2D_Jogador2" type="Line2D" parent="Player2" unique_id=1325667233]
