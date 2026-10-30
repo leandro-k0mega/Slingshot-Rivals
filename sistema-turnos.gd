@@ -97,7 +97,7 @@ func respawn_jogador(jogador: int, posicao_morte: Vector2) -> void:
 	var menor_distancia: float = INF
 	
 	for plat in plataformas:
-		if plat.has.method("is_fantasma") and plat.is_fantasma():
+		if plat.has_method("is_fantasma") and plat.is_fantasma():
 			continue
 			
 		if plat.global_position.y < posicao_morte.y:
@@ -136,7 +136,7 @@ func remover_vida(jogador: int, posicao_morte: Vector2 = Vector2.ZERO) -> void:
 
 
 func verificar_condicao_vitoria() -> void:
-	if  vida_p1 == 0 and vida_p2 == 0:
+	if vida_p1 == 0 and vida_p2 == 0:
 		estado_atual = estado_turno.game_over
 		timer_turno.stop()
 		print("GAME OVER: AMBOS OS JOGADORES FORAM ELIMINADOS!")
@@ -174,6 +174,14 @@ func alterar_turno() -> void:
 	
 	if estado_atual == estado_turno.game_over:
 		return
+		
+	if estado_atual == estado_turno.jogador_1:
+		p1_controles_invertidos = false
+		p1_ver_trajetoria = false
+	elif estado_atual == estado_turno.jogador_2:
+		p2_controles_invertidos = false
+		p2_ver_trajetoria = false
+		
 	if vida_p1 > 0 and vida_p2 > 0:
 		if estado_atual == estado_turno.jogador_1:
 			estado_atual = estado_turno.jogador_2
@@ -185,8 +193,4 @@ func alterar_turno() -> void:
 
 func _on_timer_timeout() -> void:
 	print("TEMPO ESGOTADO! TROCANDO DE TURNO...")
-	if estado_atual == estado_turno.jogador_1:
-		remover_vida(1)
-	elif estado_atual == estado_turno.jogador_2:
-		remover_vida(2)
 	alterar_turno()
