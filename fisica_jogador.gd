@@ -1,142 +1,119 @@
 # Script de física do jogador 1
-# Adendo, a maioria, se não, TUDO que for alterado em um script precisa ser alterado no outro
-
 extends RigidBody2D
 
-# Verificação de clique e puxada
+var ultimo_vetor_impulso: Vector2 = Vector2.ZERO
+
+enum Habilidade { NENHUMA, INVERTER_CONTROLES, PULO_EXTRA, MID_AIR, VER_TRAJETORIA }
+
+# Inventário e Modificadores
+var habilidade_guardada: Habilidade = Habilidade.NENHUMA
+var controles_invertidos: bool = false
+var pulo_extra_ativo: bool = false
+var pulos_restantes: int = 0
+var mid_air_ativo: bool = false
+var ver_trajetoria: bool = false
+
 var is_pulling: bool = false
 var click_start_pos: Vector2 = Vector2.ZERO
-
 var ja_disparou: bool = false
 var tempo_parado: float = 0.0
 
-# Referência de ID do jogador
-@export var numero_jogador: int = 1 # No fisica_jogador2.gd, mude este valor para 2!
+@export var numero_jogador: int = 1
+@export var gerenciador: Node2D
 
-@export var gerenciador: Node2D # Referência ao sistema de turnos
-
-# Estes valores ficam perfeitos para um jogo balançaado
 @export var launch_force_multiplier: float = 8.0 
 @export var max_pull_distance: float = 150.0      
 
-# Referência às linhas e raycasts dos cubinhos
 @onready var line_2d: Line2D = $Line2D
-@onready var ray_cast_2d: RayCast2D = $RayCast2D
-
 @onready var sprite_2d: Sprite2D = $Sprite2D
 @onready var collision_shape_2d: CollisionShape2D = $CollisionShape2D
 
-# Texturas para triângulo e círculo
 @export var textura_circulo: Texture2D
 @export var textura_triangulo: Texture2D
 
-# "void start()"
 func _ready() -> void:
 	if line_2d:
 		line_2d.clear_points()
-		line_2d.width = 12.0 
+		line_2d.width = 10.0
 
-# Função relacionada a física dos cubinhos
-func _physics_process(delta: float) -> void:
-	# Se acabou de atirar, esperamos ele encostar no chão e parar quase completamente
-	if ja_disparou:
-	# Na Godot, não é possível criar uma checagem para quando algo está 100% parado, então tive que fazer com que a checagem ocorresse perto
-	# Aumentamos um pouco a tolerância para garantir que ele detecte a parada com folga:
-		var quase_parado: bool = linear_velocity.length() < 25.0 and abs(angular_velocity) < 2.0
-	
-		if quase_parado:
-			tempo_parado += delta
-			if tempo_parado >= 0.2:
-				ja_disparou = false
-				tempo_parado = 0.0
-				print(">>> JOGADOR 1 NOTIFICOU PARADA!")
-				if gerenciador:
-					gerenciador.finalizar_jogada()
-		else:
-			tempo_parado = 0.0
-			
-			
-# Isso funciona pois o chão tem muito atrito
-func esta_no_chao() -> bool:
-	# Se a velocidade vertical for muito alta, ele está caindo/voando rápido
-	if abs(linear_velocity.y) > 30.0:
+# --- LÓGICA DE COLETA E INVENTÁRIO ---
+func coletar_habilidade(nova_hab: Habilidade) -> bool:
+	# Regra: se já tem uma habilidade no inventário, ignora novas coletas
+	if habilidade_guardada != Habilidade.NENHUMA:
+		print("Jogador ", numero_jogador, " já possui uma habilidade guardada!")
 		return false
+	habilidade_guardada = nova_hab
+	print("Jogador ", numero_jogador, " guardou a habilidade: ", Habilidade.keys()[nova_hab])
+	return true
 
-	# get_colliding_bodies() retorna os corpos físicos que o cubo está tocando agora
-	var corpos = get_colliding_bodies()
-	return corpos.size() > 0
-	
-func transformar_em_triangulo() -> void:
-	print("Transformando em triângulo!")
-	
-	# Ajusta a escala do visual se necessário
-	sprite_2d.scale = Vector2(0.25, 0.25)
-	
-	# Carrega a textura do triângulo
-	var textura_carregada = load("res://triangle.svg")
-	if textura_carregada != null:
-		sprite_2d.texture = textura_carregada
-	elif textura_triangulo != null:
-		sprite_2d.texture = textura_triangulo
-	else:
-		printerr("ERRO: Não encontrou o arquivo triangle.svg")
-
-	# Não existe colisor triângular na Godot, tivemos que improvisar
-	# Cria a colisão triangular usando ConvexPolygonShape2D
-	var novo_shape = ConvexPolygonShape2D.new()
-	
-	# Definimos os 3 cantos do triângulo (Top, Inferior Direito, Inferior Esquerdo)
-	# Supondo uma base e altura proporcionais a ~60-80 pixels ao redor do centro:
-	var tamanho: float = 60.0 # Ajuste este valor para casar com o tamanho do seu sprite
-	# Quase como um dicionário
-	novo_shape.points = PackedVector2Array([
-		Vector2(0, -tamanho),          # Vértice do topo (apontado para cima)
-		Vector2(tamanho, tamanho),     # Canto inferior direito
-		Vector2(-tamanho, tamanho)     # Canto inferior esquerdo
-	])
-	
-	collision_shape_2d.shape = novo_shape
-			 
-func transformar_em_circulo() -> void:
-	print("Transformando em círculo!")
-	sprite_2d.scale = Vector2(0.8, 0.8) # Ou ajuste para o tamanho proporcional
-	
-	# Carrega o png diretamente pelo caminho no seu projeto
-	# Substitua pelo nome exato do arquivo que você colocou na pasta res://
-	# Estas referências terão que mudar caso fomos criando pastas
-	var textura_carregada = load("res://circle.png") 
-	
-	if textura_carregada != null:
-		sprite_2d.texture = textura_carregada
-	else:
-		printerr("ERRO: Não encontrou o arquivo circle.png na pasta res://")
-
-	# Atualiza a colisão para círculo
-	var novo_shape = CircleShape2D.new()
-	novo_shape.radius =  80.0 # Altere aqui o tamanho real em pixels do raio
-	collision_shape_2d.shape = novo_shape
-
-# Função para eventos de I/O
-func _input(event: InputEvent) -> void:
-	# Se o evento for um botão do mouse e o index ser esquerdo...
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
+func ativar_habilidade_guardada() -> void:
+	if habilidade_guardada == Habilidade.NENHUMA:
+		print("Jogador ", numero_jogador, " tentou usar habilidade, mas o inventário está vazio!")
+		return
+		
+	match habilidade_guardada:
+		Habilidade.INVERTER_CONTROLES:
 			if gerenciador:
-				# Turno de 1 ou 2
-				var turno_esperado = gerenciador.estado_turno.jogador_1 if numero_jogador == 1 else gerenciador.estado_turno.jogador_2
-				if gerenciador.estado_atual != turno_esperado:
+				gerenciador.aplicar_inversao_no_oponente(numero_jogador)
+		Habilidade.PULO_EXTRA:
+			pulo_extra_ativo = true
+			print(">>> Jogador ", numero_jogador, " ativou com sucesso o Pulo Extra!")
+		Habilidade.MID_AIR:
+			mid_air_ativo = true
+			print("Jogador ", numero_jogador, " ativou Mid-Air!")
+		Habilidade.VER_TRAJETORIA:
+			ver_trajetoria = true
+			print("Jogador ", numero_jogador, " ativou Ver Trajetória!")
+			
+	habilidade_guardada = Habilidade.NENHUMA
+
+# Chamado pelo GameManager no final do turno para durar apenas 1 turno
+func limpar_efeitos_do_turno() -> void:
+	controles_invertidos = false
+	pulo_extra_ativo = false
+	pulos_restantes = 0
+	mid_air_ativo = false
+	ver_trajetoria = false
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_E:
+			# CASO 1: Está voando e possui a habilidade MID_AIR guardada
+			if ja_disparou and get_contact_count() == 0:
+				if habilidade_guardada == Habilidade.MID_AIR:
+					executar_impulso_mid_air()
 					return
 			
-			var esta_no_chao: bool = get_contact_count() > 0
-			# Só pode pular se estiver no chão
-			if esta_no_chao:
+			# CASO 2: Uso normal das outras habilidades no chão
+			if e_minha_vez():
+				ativar_habilidade_guardada()
+				
+func executar_impulso_mid_air() -> void:
+	print(">>> JOGADOR ", numero_jogador, " EXECUTOU PULO MID-AIR NO AR!")
+	habilidade_guardada = Habilidade.NENHUMA # Consome o item do inventário
+	
+	# Zera a gravidade e inércia de queda atual antes do impulso para não anular a força
+	linear_velocity = Vector2.ZERO
+	
+	# Aplica o impulso na mesma direção e intensidade do disparo anterior
+	# (Se quiser um turbo mais forte ou mais fraco, multiplique por 1.2 ou 0.8)
+	apply_central_impulse(ultimo_vetor_impulso * 1.1)
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			if not e_minha_vez():
+				return
+			
+			var pode_pular = (get_contact_count() > 0) or mid_air_ativo
+			if pode_pular:
 				var mouse_pos = get_global_mouse_position()
 				if mouse_pos.distance_to(global_position) < 45.0:
 					is_pulling = true
 					click_start_pos = mouse_pos
-					print("Jogador ", numero_jogador, " puxando estilingue!")
+					if controles_invertidos:
+						print("Aviso: Seus controles estão INVERTIDOS neste turno!")
 					
-		# Efeito estilingue
 		elif not event.pressed and is_pulling:
 			is_pulling = false
 			
@@ -144,9 +121,16 @@ func _input(event: InputEvent) -> void:
 			var pull_vector = release_pos - click_start_pos
 			pull_vector = pull_vector.limit_length(max_pull_distance)
 			
-			var final_impulse = -pull_vector * launch_force_multiplier
+			# Se invertido: inverte a direção de lançamento
+			var direcao_lancamento = pull_vector if controles_invertidos else -pull_vector
+			var final_impulse = direcao_lancamento * launch_force_multiplier
+			
+			ultimo_vetor_impulso = final_impulse
 			apply_central_impulse(final_impulse)
 			
+			if mid_air_ativo and get_contact_count() == 0:
+				mid_air_ativo = false
+				
 			if line_2d:
 				line_2d.clear_points()
 			
@@ -154,42 +138,62 @@ func _input(event: InputEvent) -> void:
 			tempo_parado = 0.0
 			if gerenciador:
 				gerenciador.registrar_disparo()
-				
-				
-# Remove sprite e linha caso morto
+
+func e_minha_vez() -> bool:
+	if gerenciador == null:
+		return false
+	var turno_esperado = gerenciador.estado_turno.jogador_1 if numero_jogador == 1 else gerenciador.estado_turno.jogador_2
+	return gerenciador.estado_atual == turno_esperado
+
+func _physics_process(delta: float) -> void:
+	if ja_disparou:
+		var quase_parado: bool = linear_velocity.length() < 25.0 and abs(angular_velocity) < 2.0
+		if quase_parado:
+			tempo_parado += delta
+			if tempo_parado >= 0.2:
+				ja_disparou = false
+				tempo_parado = 0.0
+				print(">>> Jogador ", numero_jogador, " parou no chão.")
+				if gerenciador:
+					gerenciador.finalizar_jogada()
+		else:
+			tempo_parado = 0.0
+
+func _process(_delta: float) -> void:
+	if is_pulling and line_2d:
+		desenhar_mira_ou_trajetoria()
+	elif line_2d:
+		line_2d.clear_points()
+
+func desenhar_mira_ou_trajetoria() -> void:
+	line_2d.clear_points()
+	var current_mouse = get_global_mouse_position()
+	var pull_vector = (current_mouse - click_start_pos).limit_length(max_pull_distance)
+	
+	var direcao_lancamento = pull_vector if controles_invertidos else -pull_vector
+
+	if ver_trajetoria:
+		var gravidade = ProjectSettings.get_setting("physics/2d/default_gravity") * gravity_scale
+		var vel_inicial = direcao_lancamento * launch_force_multiplier
+		var simulated_pos = Vector2.ZERO
+		var step_time = 0.04
+		
+		for i in range(25):
+			line_2d.add_point(simulated_pos)
+			simulated_pos += vel_inicial * step_time
+			vel_inicial.y += gravidade * step_time
+	else:
+		# Desenha a linha apontando para onde o cubo realmente vai voar
+		var local_target = to_local(global_position + (direcao_lancamento.normalized() * pull_vector.length() * 1.2))
+		line_2d.add_point(Vector2.ZERO)
+		line_2d.add_point(local_target)
+
 func ser_eliminado() -> void:
-	# 1. Some visualmente de imediato
 	visible = false
-	if sprite_2d:
-		sprite_2d.visible = false
 	if line_2d:
 		line_2d.clear_points()
 		line_2d.visible = false
-		
-	# Desativa colisores e física
 	if collision_shape_2d:
 		collision_shape_2d.set_deferred("disabled", true)
-	freeze = true  # Trava o RigidBody2D
-	
-	# 3. Remove completamente da cena
+	freeze = true
 	queue_free()
-
-# "void loop()"
-func _process(delta: float) -> void:
-	if is_pulling:
-		var current_mouse_pos = get_global_mouse_position()
-		var local_mouse_pos = to_local(current_mouse_pos)
-		
-		var pull_vector_visual = (local_mouse_pos - to_local(click_start_pos)).limit_length(max_pull_distance)
-		
-		var arrow_tip = Vector2.ZERO - (pull_vector_visual * 1.5)
-		
-		if line_2d:
-			line_2d.clear_points()
-			line_2d.add_point(Vector2.ZERO)
-			line_2d.add_point(arrow_tip)
-	else:
-		if line_2d:
-			line_2d.clear_points()
-			
-	

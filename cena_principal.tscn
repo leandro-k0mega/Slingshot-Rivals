@@ -3,11 +3,11 @@
 [ext_resource type="Script" uid="uid://b7auq85srg4mf" path="res://fisica_jogador.gd" id="1_18kp0"]
 [ext_resource type="Texture2D" uid="uid://bkv1ln6xugxkn" path="res://icon.svg" id="1_q3ojg"]
 [ext_resource type="Texture2D" uid="uid://d2i15xcs5wknq" path="res://circle.png" id="2_vv0rr"]
-[ext_resource type="Script" uid="uid://blhcenr3ng3kp" path="res://transformar_circulo.gd" id="3_gib8o"]
 [ext_resource type="Texture2D" uid="uid://dixfqob7vtbls" path="res://triangle.svg" id="3_runyr"]
-[ext_resource type="Script" uid="uid://cgba8ghctrl24" path="res://transformar_triangulo.gd" id="5_quwlu"]
 [ext_resource type="Script" uid="uid://dm0g8q47c84ad" path="res://fisica_jogador2.gd" id="7_8hs8y"]
 [ext_resource type="Script" uid="uid://ca5mj05athlih" path="res://sistema-turnos.gd" id="8_kq885"]
+[ext_resource type="Script" uid="uid://dcx6hetoe5ydi" path="res://agua_subindo.gd" id="15_8g611"]
+[ext_resource type="Texture2D" uid="uid://dismqawrrmdkx" path="res://istockphoto-997807300-612x612.jpg" id="15_se8fo"]
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_18kp0"]
 
@@ -15,21 +15,15 @@
 size = Vector2(131, 133)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yf5fn"]
-size = Vector2(1851, 120)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fcnqv"]
-size = Vector2(159, 155)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_7numd"]
-size = Vector2(150, 161)
+size = Vector2(7718, 140)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_d0u6y"]
 size = Vector2(141, 141)
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_fcnqv"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_57qmd"]
-size = Vector2(394, 45.5)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_p1u0y"]
+size = Vector2(7873, 4230.5)
 
 [node name="Node2D" type="Node2D" unique_id=1260034005]
 
@@ -59,41 +53,16 @@ shape = SubResource("RectangleShape2D_g4v7s")
 [node name="RayCast2D" type="RayCast2D" parent="Player1" unique_id=382481827]
 target_position = Vector2(0, 80)
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=172518323]
-zoom = Vector2(0.5, 0.5)
-
 [node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1838920665]
 position = Vector2(475, 304)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=882315058]
-position = Vector2(-477.5, 144)
+position = Vector2(-489, 154)
 shape = SubResource("RectangleShape2D_yf5fn")
 
 [node name="Sprite2D" type="Sprite2D" parent="StaticBody2D" unique_id=1922246850]
-position = Vector2(-475, 144)
-scale = Vector2(14.4453125, 1)
-texture = ExtResource("1_q3ojg")
-
-[node name="TransformarCirculo" type="Area2D" parent="." unique_id=1978434990]
-script = ExtResource("3_gib8o")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TransformarCirculo" unique_id=961467569]
-position = Vector2(469, 262)
-shape = SubResource("RectangleShape2D_fcnqv")
-
-[node name="Sprite2D" type="Sprite2D" parent="TransformarCirculo" unique_id=40720319]
-position = Vector2(469, 256)
-texture = ExtResource("1_q3ojg")
-
-[node name="TransformarTriangulo" type="Area2D" parent="." unique_id=1852890268]
-script = ExtResource("5_quwlu")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="TransformarTriangulo" unique_id=355807086]
-position = Vector2(-663, 235)
-shape = SubResource("RectangleShape2D_7numd")
-
-[node name="Sprite2D" type="Sprite2D" parent="TransformarTriangulo" unique_id=517812786]
-position = Vector2(-662, 236)
+position = Vector2(-469, 149)
+scale = Vector2(59.652344, 1)
 texture = ExtResource("1_q3ojg")
 
 [node name="Player2" type="RigidBody2D" parent="." unique_id=241586817 node_paths=PackedStringArray("gerenciador")]
@@ -118,8 +87,9 @@ target_position = Vector2(-1, 80)
 
 [node name="Line2D_Jogador2" type="Line2D" parent="Player2" unique_id=1325667233]
 
-[node name="Gerenciador_de_turnos" type="Node2D" parent="." unique_id=1288506682 node_paths=PackedStringArray("jogador_1_node", "jogador_2_node")]
+[node name="Gerenciador_de_turnos" type="Node2D" parent="." unique_id=1288506682 node_paths=PackedStringArray("agua_node", "jogador_1_node", "jogador_2_node")]
 script = ExtResource("8_kq885")
+agua_node = NodePath("../Agua")
 jogador_1_node = NodePath("../Player1")
 jogador_2_node = NodePath("../Player2")
 
@@ -127,25 +97,18 @@ jogador_2_node = NodePath("../Player2")
 
 [node name="Grupos_plataformas" type="Node2D" parent="." unique_id=378763789]
 
-[node name="Plataforma" type="StaticBody2D" parent="Grupos_plataformas" unique_id=1665420242 groups=["Plataformas"]]
+[node name="Agua" type="Area2D" parent="." unique_id=406984107 node_paths=PackedStringArray("gerenciador")]
+script = ExtResource("15_8g611")
+gerenciador = NodePath("../Gerenciador_de_turnos")
 
-[node name="Sprite2D" type="Sprite2D" parent="Grupos_plataformas/Plataforma" unique_id=1531439040]
-position = Vector2(432.5, -76)
-scale = Vector2(3.0859373, 0.4140625)
-texture = ExtResource("1_q3ojg")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Agua" unique_id=1916477947]
+position = Vector2(27.5, 2780.75)
+shape = SubResource("RectangleShape2D_p1u0y")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Grupos_plataformas/Plataforma" unique_id=1776448853]
-position = Vector2(432, -77.75)
-shape = SubResource("RectangleShape2D_57qmd")
+[node name="Sprite2D" type="Sprite2D" parent="Agua" unique_id=535967916]
+position = Vector2(38, 2879)
+scale = Vector2(13.026144, 7.267974)
+texture = ExtResource("15_se8fo")
 
-[node name="Plataforma2" type="StaticBody2D" parent="Grupos_plataformas" unique_id=1784235616 groups=["Plataformas"]]
-position = Vector2(-1132, -213)
-
-[node name="Sprite2D" type="Sprite2D" parent="Grupos_plataformas/Plataforma2" unique_id=1755548858]
-position = Vector2(432.5, -76)
-scale = Vector2(3.0859373, 0.4140625)
-texture = ExtResource("1_q3ojg")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Grupos_plataformas/Plataforma2" unique_id=338734685]
-position = Vector2(432, -77.75)
-shape = SubResource("RectangleShape2D_57qmd")
+[node name="Camera2D" type="Camera2D" parent="." unique_id=975006862]
+zoom = Vector2(0.405, 0.405)
