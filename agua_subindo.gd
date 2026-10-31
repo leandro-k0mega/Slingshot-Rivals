@@ -12,6 +12,9 @@ func subir_agua() -> void:
 	var tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "position:y", nova_posicao_y, duracao_subida)
 	print(">>> A água subiu! Novo nível Y: ", nova_posicao_y)
+	print("Agora a água sobe ", pixels_por_rodada, " px por rodada")
+	pixels_por_rodada += 20
+	
 
 func _on_body_entered(body: Node2D) -> void:
 	# Verifica se é um dos cubos dos jogadores
