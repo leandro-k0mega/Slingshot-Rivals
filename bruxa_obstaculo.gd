@@ -11,8 +11,6 @@ var indo_para_direita: bool = true
 
 func _ready() -> void:
 	ponto_inicial_x = global_position.x
-	if area_deteccao:
-		area_deteccao.body_entered.connect(_on_area_body_entered)
 
 func _physics_process(delta: float) -> void:
 	var limite_dir = ponto_inicial_x + distancia_patrulha
@@ -34,9 +32,3 @@ func atualizar_flip() -> void:
 	if sprite_2d:
 		# Se a arte original da bruxa olha para a esquerda, inverta a condição:
 		sprite_2d.flip_h = indo_para_direita
-
-func _on_area_body_entered(body: Node2D) -> void:
-	# Aplica a inversão de controle se colidir com o cubo do jogador
-	if "controles_invertidos" in body:
-		body.controles_invertidos = true
-		print("Bruxa acertou o Jogador ", body.numero_jogador, "! Controles invertidos.")

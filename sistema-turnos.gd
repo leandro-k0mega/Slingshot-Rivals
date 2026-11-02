@@ -1,5 +1,11 @@
 extends Node2D
 
+@export var camera_fantasma: Camera2D
+@export var camera_principal: Camera2D # A câmera do jogo normal
+
+var em_modo_fantasma: bool = false
+var jogador_fantasma_ativo: RigidBody2D = null
+
 var jogador_ativo_no_disparo: int = 1
 
 var vida_p1: int = 3
@@ -18,8 +24,32 @@ var proximo_turno: estado_turno = estado_turno.jogador_2
 
 func _ready() -> void:
 	if timer_turno:
-		timer_turno.timeout.connect(_on_timer_timeout)
+		# Conecta com a função correta
+		timer_turno.timeout.connect(_on_timer_turno_timeout)
 	iniciar_turno()
+
+func is_modo_fantasma_ativo() -> bool:
+	return em_modo_fantasma
+
+func iniciar_fantasmagorificar(jogador: RigidBody2D) -> void:
+	em_modo_fantasma = true
+	jogador_fantasma_ativo = jogador
+	if timer_turno:
+		timer_turno.paused = true
+	if camera_fantasma and camera_fantasma.has_method("ativar_modo_fantasma"):
+		camera_fantasma.ativar_modo_fantasma(camera_principal)
+
+func finalizar_uso_fantasmagorificar() -> void:
+	em_modo_fantasma = false
+	if timer_turno:
+		timer_turno.paused = false
+	print(">>> Plataforma selecionada com sucesso! Turno segue normalmente.")
+
+func atualizar_plataformas_fantasmas() -> void:
+	var plataformas = get_tree().get_nodes_in_group("Plataformas")
+	for plat in plataformas:
+		if plat.has_method("processar_passagem_turno"):
+			plat.processar_passagem_turno()
 
 # --- Comandos de teste de dano (K / L) ---
 func _unhandled_input(event: InputEvent) -> void:
@@ -33,16 +63,12 @@ func iniciar_turno() -> void:
 	if estado_atual == estado_turno.game_over:
 		return
 	
-	# Verifica se uma rodada completa começou (ex: vez do Jogador 1)
 	if estado_atual == estado_turno.jogador_1:
 		if agua_node and agua_node.has_method("subir_agua"):
 			agua_node.subir_agua()
-	
-	# (Se um dos jogadores estiver morto e jogando sozinho, a água sobe a cada pulo dele)
 	elif (vida_p1 == 0 or vida_p2 == 0) and agua_node and agua_node.has_method("subir_agua"):
 		agua_node.subir_agua()
 	
-	# Redireciona caso alguém tenha sido eliminado
 	if vida_p1 == 0 and vida_p2 > 0:
 		estado_atual = estado_turno.jogador_2
 		proximo_turno = estado_turno.jogador_2
@@ -67,7 +93,6 @@ func registrar_disparo() -> void:
 	if timer_turno:
 		timer_turno.stop()
 	
-	# Memoriza quem atirou antes de virar "processando_jogada"
 	if estado_atual == estado_turno.jogador_1:
 		jogador_ativo_no_disparo = 1
 	elif estado_atual == estado_turno.jogador_2:
@@ -81,7 +106,6 @@ func finalizar_jogada() -> void:
 	
 	var autor_do_tiro = jogador_1_node if jogador_ativo_no_disparo == 1 else jogador_2_node
 	
-	# Pulo Extra normal (após tiro na plataforma)
 	if autor_do_tiro and is_instance_valid(autor_do_tiro) and autor_do_tiro.pulo_extra_ativo:
 		autor_do_tiro.pulo_extra_ativo = false
 		estado_atual = estado_turno.jogador_1 if jogador_ativo_no_disparo == 1 else estado_turno.jogador_2
@@ -89,7 +113,6 @@ func finalizar_jogada() -> void:
 			timer_turno.start(15.0)
 		return
 
-	# Limpa apenas os efeitos de quem acabou de disparar
 	if autor_do_tiro and is_instance_valid(autor_do_tiro):
 		autor_do_tiro.limpar_efeitos_do_turno()
 	
@@ -108,7 +131,6 @@ func alterar_turno() -> void:
 	if estado_atual == estado_turno.game_over:
 		return
 	
-	# Descobre quem acabou de jogar (mesmo se estiver em processando_jogada)
 	var quem_jogou = jogador_ativo_no_disparo if estado_atual == estado_turno.processando_jogada else (1 if estado_atual == estado_turno.jogador_1 else 2)
 	var autor_node = jogador_1_node if quem_jogou == 1 else jogador_2_node
 	
@@ -116,7 +138,6 @@ func alterar_turno() -> void:
 		autor_node.limpar_efeitos_do_turno()
 	
 	if vida_p1 > 0 and vida_p2 > 0:
-		# Alterna com base em quem estava ativo
 		estado_atual = estado_turno.jogador_2 if quem_jogou == 1 else estado_turno.jogador_1
 	elif vida_p1 == 0 and vida_p2 > 0:
 		estado_atual = estado_turno.jogador_2
@@ -131,12 +152,28 @@ func limpar_efeitos_jogadores() -> void:
 	if jogador_2_node and is_instance_valid(jogador_2_node):
 		jogador_2_node.limpar_efeitos_do_turno()
 
-func _on_timer_timeout() -> void:
-	print("TEMPO ESGOTADO!")
-	if estado_atual == estado_turno.jogador_1:
-		remover_vida(1)
-	elif estado_atual == estado_turno.jogador_2:
-		remover_vida(2)
+# --- Timeout de 15s: Apenas passa a vez sem matar ---
+func _on_timer_turno_timeout() -> void:
+	print("Tempo de 15s esgotado! Nenhuma ação realizada. Passando a vez...")
+	
+	# Cancela mira caso estivesse puxando o estilingue
+	if jogador_1_node and is_instance_valid(jogador_1_node) and jogador_1_node.is_pulling:
+		jogador_1_node.is_pulling = false
+		if jogador_1_node.line_2d:
+			jogador_1_node.line_2d.clear_points()
+			
+	if jogador_2_node and is_instance_valid(jogador_2_node) and jogador_2_node.is_pulling:
+		jogador_2_node.is_pulling = false
+		if jogador_2_node.line_2d:
+			jogador_2_node.line_2d.clear_points()
+
+	# Limpa efeitos de turno do jogador atual
+	if estado_atual == estado_turno.jogador_1 and jogador_1_node and is_instance_valid(jogador_1_node):
+		jogador_1_node.limpar_efeitos_do_turno()
+	elif estado_atual == estado_turno.jogador_2 and jogador_2_node and is_instance_valid(jogador_2_node):
+		jogador_2_node.limpar_efeitos_do_turno()
+
+	alterar_turno()
 
 func remover_vida(jogador: int, posicao_morte: Vector2 = Vector2.ZERO) -> void:
 	if estado_atual == estado_turno.game_over:
@@ -190,6 +227,18 @@ func processar_pos_queda_agua(jogador_node: RigidBody2D) -> void:
 		print(">>> Jogador caiu na água sem pulo extra. Passando o turno...")
 		alterar_turno()
 
+func aplicar_circulo_no_oponente(jogador_que_usou: int) -> void:
+	var alvo = jogador_2_node if jogador_que_usou == 1 else jogador_1_node
+	
+	if alvo and is_instance_valid(alvo):
+		if alvo.has_method("transformar_em_circulo"):
+			alvo.transformar_em_circulo(true)
+			print(">>> GERENCIADOR: Jogador ", alvo.numero_jogador, " virou CÍRCULO!")
+		else:
+			push_error("ERRO: O nó do jogador alvo não tem o método transformar_em_circulo!")
+	else:
+		push_error("ERRO: jogador_1_node ou jogador_2_node está VAZIO no Inspetor do Gerenciador!")
+
 func verificar_condicao_vitoria() -> void:
 	if vida_p1 == 0 and vida_p2 == 0:
 		estado_atual = estado_turno.game_over
@@ -206,7 +255,7 @@ func verificar_condicao_vitoria() -> void:
 			proximo_turno = estado_turno.jogador_1
 
 func respawn_jogador(jogador: int, posicao_queda: Vector2) -> void:
-	var plataformas = get_tree().get_nodes_in_group("Plataforma")
+	var plataformas = get_tree().get_nodes_in_group("Plataformas")
 	
 	if plataformas.is_empty():
 		push_warning("ATENÇÃO: Nenhuma plataforma foi encontrada no grupo 'Plataformas'!")
