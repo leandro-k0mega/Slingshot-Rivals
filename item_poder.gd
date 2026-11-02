@@ -1,42 +1,27 @@
 extends Area2D
 
-# 1 a 4 são poderes de inventário; 5 e 6 são armadilhas imediatas
+# 1 a 4 são os poderes que podem ser guardados no inventário
 enum TipoItem {
 	INVERTER_CONTROLES = 1,
 	PULO_EXTRA = 2,
 	MID_AIR = 3,
-	VER_TRAJETORIA = 4,
-	ARMADILHA_FANTASMA = 5,
-	ARMADILHA_BRUXA = 6
+	VER_TRAJETORIA = 4
 }
 
+# Permite escolher qual poder este coletável representa direto no Inspetor
 @export var tipo: TipoItem = TipoItem.PULO_EXTRA
 
 func _ready() -> void:
+	# Conecta o sinal nativo de colisão da Area2D
 	body_entered.connect(_on_body_entered)
 
 func _on_body_entered(body: Node2D) -> void:
+	# Verifica se o nó que colidiu possui o método de inventário do jogador
 	if not body.has_method("coletar_habilidade"):
 		return
 	
-	# CASO 1: Armadilhas (Aplicam na hora, não vão para o inventário)
-	if tipo == TipoItem.ARMADILHA_BRUXA:
-		body.controles_invertidos = true
-		print("Bruxa atingiu o Jogador ", body.numero_jogador, "! Controles invertidos imediatamente.")
-		queue_free()
-		return
-		
-	elif tipo == TipoItem.ARMADILHA_FANTASMA:
-		# Transforma a plataforma abaixo em fantasma
-		var plataformas = get_tree().get_nodes_in_group("Plataformas")
-		for plat in plataformas:
-			if plat.global_position.distance_to(global_position) < 80.0:
-				if plat.has_method("tornar_fantasma"):
-					plat.tornar_fantasma()
-		queue_free()
-		return
-	
-	# CASO 2: Poderes de Inventário
+	# Tenta coletar: retorna true apenas se o inventário do cubo estava vazio
 	var coletou = body.coletar_habilidade(tipo)
 	if coletou:
+		print("Poder coletado pelo Jogador ", body.numero_jogador, "! Tipo: ", tipo)
 		queue_free()
